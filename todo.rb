@@ -2,11 +2,13 @@ require "sinatra"
 require "sinatra/reloader"
 require "tilt/erubi"
 
+configure do
+  enable :sessions
+  set :session_secret, SecureRandom.hex(32)
+end
+
 before do
-  @lists = [
-    {name: "New list", todos: []},
-    {name: "New list 2", todos: []}
-  ]
+  session[:lists] ||= []
 end
 
 get "/" do
@@ -14,5 +16,15 @@ get "/" do
 end
 
 get "/lists" do
+  @lists = session[:lists]
   erb :lists
+end
+
+get "/lists/new" do
+  erb :new_list
+end
+
+post "/lists" do
+  session[:lists] << {name: params[:list_name], todos: []}
+  redirect "/lists"
 end
