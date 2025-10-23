@@ -12,6 +12,22 @@
       <h1>Todo Tracker</h1>
     </header>
     <main>
+      <% if session[:list_create_success] %>
+        <div class="flash success">
+          <p>
+            <%= session.delete(:list_create_success) %>
+          </p>
+        </div>
+      <% end %>
+
+      <% if session[:list_create_error] %>
+        <div class="flash error">
+          <p>
+            <%= session.delete(:list_create_error) %>
+          </p>
+        </div>
+      <% end %>
+
       <%= yield %>
     </main>
   </body>

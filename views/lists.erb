@@ -1,12 +1,4 @@
 
-<% if session[:list_create_success] %>
-  <div class="flash success">
-    <p>
-      <%= session.delete(:list_create_success) %>
-    </p>
-  </div>
-<% end %>
-
 <ul id="lists">
   <% @lists.each do |list| %>
     <a>

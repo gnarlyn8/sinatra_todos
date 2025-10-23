@@ -1,6 +1,7 @@
 require "sinatra"
 require "sinatra/reloader"
 require "tilt/erubi"
+require "pry"
 
 configure do
   enable :sessions
@@ -24,8 +25,25 @@ get "/lists/new" do
   erb :new_list
 end
 
-post "/lists" do
-  session[:lists] << {name: params[:list_name], todos: []}
-  session[:list_create_success] = "The list has successfully been created!"
-  redirect "/lists"
+def error_for_list_name(list_name)
+  if !list_name.size.between?(1, 100)
+    "List name must contain between 1 and 100 characters"
+  elsif session[:lists].any? { |list| list[:name] == list_name }
+    "List name must be unique"
+  end
 end
+
+post "/lists" do
+  list_name = params[:list_name].strip
+
+  if (error = error_for_list_name(list_name))
+    session[:list_create_error] = error
+    erb :new_list
+  else
+    session[:lists] << {name: list_name, todos: []}
+    session[:list_create_success] = "The list has successfully been created!"
+    redirect "/lists"
+  end
+end
+
+
