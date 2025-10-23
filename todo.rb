@@ -26,5 +26,6 @@ end
 
 post "/lists" do
   session[:lists] << {name: params[:list_name], todos: []}
+  session[:list_create_success] = "The list has successfully been created!"
   redirect "/lists"
 end
