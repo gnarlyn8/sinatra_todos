@@ -46,4 +46,9 @@ post "/lists" do
   end
 end
 
+get "/lists/:id" do
+  list_id = params[:id].to_i
+  @list = session[:lists][list_id]
 
+  erb :list
+end
