@@ -2,7 +2,6 @@ require "sinatra"
 require "sinatra/reloader"
 require "sinatra/content_for"
 require "tilt/erubi"
-require "pry"
 
 configure do
   enable :sessions
@@ -38,49 +37,72 @@ post "/lists" do
   list_name = params[:list_name].strip
 
   if (error = error_for_list_name(list_name))
-    session[:list_create_error] = error
+    session[:error] = error
     erb :new_list
   else
     session[:lists] << {name: list_name, todos: []}
-    session[:list_success] = "The list has successfully been created!"
+    session[:success] = "The list has successfully been created!"
     redirect "/lists"
   end
 end
 
 get "/lists/:id" do
-  list_id = params[:id].to_i
-  @list = session[:lists][list_id]
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
+  @todos = @list[:todos]
 
   erb :list
 end
 
 post "/lists/:id" do
   list_name = params[:list_name].strip
-  list_id = params[:id].to_i
-  @list = session[:lists][list_id]
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
 
   if (error = error_for_list_name(list_name))
-    session[:list_create_error] = error
+    session[:error] = error
     erb :edit_list
   else
     @list[:name] = list_name
-    session[:list_success] = "The list has successfully updated!"
-    redirect "/lists/:id"
+    session[:success] = "The list has successfully updated!"
+    redirect "/lists/#{params[:id]}"
   end
 end
 
 get "/lists/:id/edit" do
-  list_id = params[:id].to_i
-  @list = session[:lists][list_id]
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
 
   erb :edit_list
 end
 
 post "/lists/:id/delete" do
-  list_id = params[:id].to_i
-  @list = session[:lists][list_id]
-  session[:lists].delete_at(list_id)
-  session[:list_success] = "#{@list[:name]} was successfully deleted."
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
+  session[:lists].delete_at(@list_id)
+  session[:success] = "#{@list[:name]} was successfully deleted."
 
   redirect "/lists"
+end
+
+def error_for_todo(todo)
+  if !todo.size.between?(1, 100)
+    "Todo must contain between 1 and 100 characters"
+  end
+end
+
+post "/lists/:id/todos" do
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
+  @todos = @list[:todos]
+  todo = params[:todo]
+
+  if (error = error_for_todo(todo))
+    session[:error] = error
+    erb :list
+  else
+    @list[:todos] << {name: todo, completed: false}
+    session[:success] = "#{todo} was successfully added to list."
+    redirect "/lists/#{params[:id]}"
+  end
 end
