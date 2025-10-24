@@ -145,3 +145,21 @@ post "/lists/:id/todos/complete_all" do
 
   redirect "/lists/#{params[:id]}"
 end
+
+helpers do
+  def list_complete?(list)
+    list[:todos].all? { |todo| todo[:completed] } && list[:todos].size > 0
+  end
+
+  def list_class(list)
+    "completed" if list_complete?(list)
+  end
+
+  def todos_remaining_count(list)
+    list[:todos].select { |todo| !todo[:completed]}.size
+  end
+
+  def total_todos(list)
+    list[:todos].size
+  end
+end
