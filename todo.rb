@@ -151,6 +151,10 @@ helpers do
     todos_remaining_count(list).zero? && total_todos(list) > 0
   end
 
+  def todo_complete?(todo)
+    todo[:completed]
+  end
+
   def list_class(list)
     "complete" if list_complete?(list)
   end
@@ -161,5 +165,40 @@ helpers do
 
   def total_todos(list)
     list[:todos].size
+  end
+
+  def sorted_lists(lists, &block)
+    incomplete_lists = {}
+    completed_lists = {}
+
+    lists.each_with_index do |list, index|
+      if list_complete?(list)
+        completed_lists[list] = index
+      else
+        incomplete_lists[list] = index
+      end
+    end
+
+    incomplete_lists.each(&block)
+    completed_lists.each(&block)
+  end
+
+  # there is a bug with this when you complete or check a todo as incomplete
+  # not sure if it's related to the data type, or sessions
+  # id's in a real database would solve this issue with array indexes
+  def sorted_todos(todos, &block)
+    incomplete_todos = {}
+    completed_todos = {}
+
+    todos.each_with_index do |todo, index|
+      if todo_complete?(todo)
+        completed_todos[todo] = index
+      else
+        incomplete_todos[todo] = index
+      end
+    end
+
+    incomplete_todos.each(&block)
+    completed_todos.each(&block)
   end
 end
