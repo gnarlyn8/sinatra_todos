@@ -2,7 +2,14 @@
   <header>
     <h2><%= @list[:name] %></h2>
     <ul>
-      <li><a class="edit" href="/lists/<%= @list_id%>/edit">Edit List</a></li>
+      <li>
+        <form action="/lists/<%= @list_id %>/todos/complete_all" method="post">
+          <button class="check" type="submit">Complete All</button>
+        </form>
+      </li>
+      <li>
+        <a class="edit" href="/lists/<%= @list_id%>/edit">Edit List</a>
+      </li>
     </ul>
   </header>
   <% unless @todos.empty? %>

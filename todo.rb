@@ -2,7 +2,6 @@ require "sinatra"
 require "sinatra/reloader"
 require "sinatra/content_for"
 require "tilt/erubi"
-require 'pry'
 
 configure do
   enable :sessions
@@ -122,9 +121,9 @@ def todo_completed?(todo)
   todo
 end
 
-post "/lists/:id/todos/:index/toggle" do
-  todo_id = params[:index].to_i
-  @list_id = params[:id].to_i
+post "/lists/:list_id/todos/:id/toggle" do
+  todo_id = params[:id].to_i
+  @list_id = params[:list_id].to_i
   @list = session[:lists][@list_id]
   todo = @list[:todos][todo_id]
   todo[:completed] = !(todo[:completed] == true)
@@ -134,6 +133,15 @@ post "/lists/:id/todos/:index/toggle" do
   else
     session[:error] = "#{todo[:name]} was marked as not done."
   end
+
+  redirect "/lists/#{params[:id]}"
+end
+
+post "/lists/:id/todos/complete_all" do
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
+  @list[:todos].map { |todo| todo[:completed] = true }
+  session[:success] = "All todos marked as completed!"
 
   redirect "/lists/#{params[:id]}"
 end
