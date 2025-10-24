@@ -42,7 +42,7 @@ post "/lists" do
     erb :new_list
   else
     session[:lists] << {name: list_name, todos: []}
-    session[:list_create_success] = "The list has successfully been created!"
+    session[:list_success] = "The list has successfully been created!"
     redirect "/lists"
   end
 end
@@ -64,7 +64,7 @@ post "/lists/:id" do
     erb :edit_list
   else
     @list[:name] = list_name
-    session[:list_create_success] = "The list has successfully updated!"
+    session[:list_success] = "The list has successfully updated!"
     redirect "/lists/:id"
   end
 end
@@ -74,4 +74,13 @@ get "/lists/:id/edit" do
   @list = session[:lists][list_id]
 
   erb :edit_list
+end
+
+post "/lists/:id/delete" do
+  list_id = params[:id].to_i
+  @list = session[:lists][list_id]
+  session[:lists].delete_at(list_id)
+  session[:list_success] = "#{@list[:name]} was successfully deleted."
+
+  redirect "/lists"
 end

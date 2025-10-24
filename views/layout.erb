@@ -15,10 +15,10 @@
       </div>
     </header>
     <main>
-      <% if session[:list_create_success] %>
+      <% if session[:list_success] %>
         <div class="flash success">
           <p>
-            <%= session.delete(:list_create_success) %>
+            <%= session.delete(:list_success) %>
           </p>
         </div>
       <% end %>
