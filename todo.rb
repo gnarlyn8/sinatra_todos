@@ -117,3 +117,23 @@ post "/lists/:id/todos/:index/destroy" do
 
   redirect "/lists/#{params[:id]}"
 end
+
+def todo_completed?(todo)
+  todo
+end
+
+post "/lists/:id/todos/:index/toggle" do
+  todo_id = params[:index].to_i
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
+  todo = @list[:todos][todo_id]
+  todo[:completed] = !(todo[:completed] == true)
+
+  if todo[:completed]
+    session[:success] = "#{todo[:name]} was successfully completed. Good job!"
+  else
+    session[:error] = "#{todo[:name]} was marked as not done."
+  end
+
+  redirect "/lists/#{params[:id]}"
+end
