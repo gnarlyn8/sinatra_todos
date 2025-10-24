@@ -148,11 +148,11 @@ end
 
 helpers do
   def list_complete?(list)
-    list[:todos].all? { |todo| todo[:completed] } && list[:todos].size > 0
+    todos_remaining_count(list).zero? && total_todos(list) > 0
   end
 
   def list_class(list)
-    "completed" if list_complete?(list)
+    "complete" if list_complete?(list)
   end
 
   def todos_remaining_count(list)
