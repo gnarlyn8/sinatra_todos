@@ -53,3 +53,25 @@ get "/lists/:id" do
 
   erb :list
 end
+
+post "/lists/:id" do
+  list_name = params[:list_name].strip
+  list_id = params[:id].to_i
+  @list = session[:lists][list_id]
+
+  if (error = error_for_list_name(list_name))
+    session[:list_create_error] = error
+    erb :edit_list
+  else
+    @list[:name] = list_name
+    session[:list_create_success] = "The list has successfully updated!"
+    redirect "/lists/:id"
+  end
+end
+
+get "/lists/:id/edit" do
+  list_id = params[:id].to_i
+  @list = session[:lists][list_id]
+
+  erb :edit_list
+end
