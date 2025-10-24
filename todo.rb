@@ -2,6 +2,7 @@ require "sinatra"
 require "sinatra/reloader"
 require "sinatra/content_for"
 require "tilt/erubi"
+require 'pry'
 
 configure do
   enable :sessions
@@ -105,4 +106,14 @@ post "/lists/:id/todos" do
     session[:success] = "#{todo} was successfully added to list."
     redirect "/lists/#{params[:id]}"
   end
+end
+
+post "/lists/:id/todos/:index/destroy" do
+  todo_id = params[:index].to_i
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
+  @list[:todos].delete_at(todo_id)
+  session[:success] = "Todo has been deleted."
+
+  redirect "/lists/#{params[:id]}"
 end

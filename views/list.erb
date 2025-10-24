@@ -9,7 +9,10 @@
   <ul>
     <% @todos.each_with_index do |todo, index| %>
       <li>
-        <h3><%= todo[:name] %></h3>
+        <h3><%= todo[:name] %> </h3>
+        <form action="/lists/<%= @list_id %>/todos/<%= index %>/destroy" method="post" class="delete">
+          <button type="submit">Delete</button>
+        </form>
       </li>
     <% end %>
   </ul>
@@ -31,5 +34,5 @@
 </form>
 
 <% content_for :header_links do %>
-  <a href="/lists">All Todo Lists</a>
+  <a class="list" href="/lists">All Todo Lists</a>
 <% end %>
