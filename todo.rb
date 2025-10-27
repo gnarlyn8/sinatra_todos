@@ -6,10 +6,19 @@ require "tilt/erubi"
 configure do
   enable :sessions
   set :session_secret, SecureRandom.hex(32)
+  set :erb, escape_html: true
 end
 
 before do
   session[:lists] ||= []
+end
+
+def load_list(id)
+  list = session[:lists][id]
+  return list if list
+
+  session[:error] = "The specified list was not found."
+  redirect "/lists"
 end
 
 get "/" do
@@ -48,7 +57,7 @@ end
 
 get "/lists/:id" do
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   @todos = @list[:todos]
 
   erb :list
@@ -57,7 +66,7 @@ end
 post "/lists/:id" do
   list_name = params[:list_name].strip
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
 
   if (error = error_for_list_name(list_name))
     session[:error] = error
@@ -93,7 +102,7 @@ end
 
 post "/lists/:id/todos" do
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   @todos = @list[:todos]
   todo = params[:todo]
 
@@ -110,7 +119,7 @@ end
 post "/lists/:id/todos/:index/destroy" do
   todo_id = params[:index].to_i
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   @list[:todos].delete_at(todo_id)
   session[:success] = "Todo has been deleted."
 
@@ -124,7 +133,7 @@ end
 post "/lists/:list_id/todos/:id/toggle" do
   todo_id = params[:id].to_i
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   todo = @list[:todos][todo_id]
   todo[:completed] = !(todo[:completed] == true)
 
@@ -134,12 +143,12 @@ post "/lists/:list_id/todos/:id/toggle" do
     session[:error] = "#{todo[:name]} was marked as not done."
   end
 
-  redirect "/lists/#{params[:id]}"
+  redirect "/lists/#{params[:list_id]}"
 end
 
 post "/lists/:id/todos/complete_all" do
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   @list[:todos].map { |todo| todo[:completed] = true }
   session[:success] = "All todos marked as completed!"
 
@@ -183,9 +192,6 @@ helpers do
     completed_lists.each(&block)
   end
 
-  # there is a bug with this when you complete or check a todo as incomplete
-  # not sure if it's related to the data type, or sessions
-  # id's in a real database would solve this issue with array indexes
   def sorted_todos(todos, &block)
     incomplete_todos = {}
     completed_todos = {}
