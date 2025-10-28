@@ -103,6 +103,11 @@ def error_for_todo(todo)
   end
 end
 
+def next_todo_id(todos)
+  max = todos.map { |todo| todo[:id] }.max || 0
+  max + 1
+end
+
 post "/lists/:id/todos" do
   @list_id = params[:id].to_i
   @list = load_list(@list_id)
@@ -113,7 +118,8 @@ post "/lists/:id/todos" do
     session[:error] = error
     erb :list
   else
-    @list[:todos] << {name: todo, completed: false}
+    id = next_todo_id(@list[:todos])
+    @list[:todos] << {id: id, name: todo, completed: false}
     session[:success] = "#{todo} was successfully added to list."
     redirect "/lists/#{params[:id]}"
   end
@@ -123,7 +129,7 @@ post "/lists/:id/todos/:index/destroy" do
   todo_id = params[:index].to_i
   @list_id = params[:id].to_i
   @list = load_list(@list_id)
-  @list[:todos].delete_at(todo_id)
+  @list[:todos].reject! { |todo| todo[:id] == todo_id }
   if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"
     status 204
   else
@@ -140,7 +146,7 @@ post "/lists/:list_id/todos/:id/toggle" do
   todo_id = params[:id].to_i
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
-  todo = @list[:todos][todo_id]
+  todo = @list[:todos].find { |todo| todo[:id] == todo_id }
   todo[:completed] = !(todo[:completed] == true)
 
   if todo[:completed]
@@ -174,6 +180,10 @@ helpers do
     "complete" if list_complete?(list)
   end
 
+  def todo_class(todo)
+    "complete" if todo[:completed]
+  end
+
   def todos_remaining_count(list)
     list[:todos].select { |todo| !todo[:completed]}.size
   end
@@ -183,32 +193,14 @@ helpers do
   end
 
   def sorted_lists(lists, &block)
-    incomplete_lists = {}
-    completed_lists = {}
+    completed_lists, incomplete_lists = lists.partition { |list| list_complete?(list) }
 
-    lists.each_with_index do |list, index|
-      if list_complete?(list)
-        completed_lists[list] = index
-      else
-        incomplete_lists[list] = index
-      end
-    end
-
-    incomplete_lists.each(&block)
-    completed_lists.each(&block)
+    incomplete_lists.each { |list| yield list, lists.index(list) }
+    completed_lists.each { |list| yield list, lists.index(list) }
   end
 
   def sorted_todos(todos, &block)
-    incomplete_todos = {}
-    completed_todos = {}
-
-    todos.each_with_index do |todo, index|
-      if todo_complete?(todo)
-        completed_todos[todo] = index
-      else
-        incomplete_todos[todo] = index
-      end
-    end
+    completed_todos, incomplete_todos = todos.partition { |todo| todo[:completed] }
 
     incomplete_todos.each(&block)
     completed_todos.each(&block)
