@@ -14,7 +14,8 @@ before do
 end
 
 def load_list(id)
-  list = session[:lists][id]
+  list = session[:lists].find { |list| list[:id] == id }
+
   return list if list
 
   session[:error] = "The specified list was not found."
@@ -42,14 +43,21 @@ def error_for_list_name(list_name)
   end
 end
 
+def next_id(obj)
+  max = obj.map { |el| el[:id] }.max || 0
+  max + 1
+end
+
 post "/lists" do
   list_name = params[:list_name].strip
+  @lists = session[:lists]
 
   if (error = error_for_list_name(list_name))
     session[:error] = error
     erb :new_list
   else
-    session[:lists] << {name: list_name, todos: []}
+    id = next_id(@lists)
+    session[:lists] << {id: id, name: list_name, todos: []}
     session[:success] = "The list has successfully been created!"
     redirect "/lists"
   end
@@ -80,7 +88,7 @@ end
 
 get "/lists/:id/edit" do
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
 
   erb :edit_list
 end
@@ -88,7 +96,7 @@ end
 post "/lists/:id/delete" do
   @list_id = params[:id].to_i
   @list = session[:lists][@list_id]
-  session[:lists].delete_at(@list_id)
+  session[:lists].reject! { |list| list[:id] == @list_id }
   if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"
     "/lists"
   else
@@ -103,11 +111,6 @@ def error_for_todo(todo)
   end
 end
 
-def next_todo_id(todos)
-  max = todos.map { |todo| todo[:id] }.max || 0
-  max + 1
-end
-
 post "/lists/:id/todos" do
   @list_id = params[:id].to_i
   @list = load_list(@list_id)
@@ -118,7 +121,7 @@ post "/lists/:id/todos" do
     session[:error] = error
     erb :list
   else
-    id = next_todo_id(@list[:todos])
+    id = next_id(@list[:todos])
     @list[:todos] << {id: id, name: todo, completed: false}
     session[:success] = "#{todo} was successfully added to list."
     redirect "/lists/#{params[:id]}"
@@ -195,8 +198,8 @@ helpers do
   def sorted_lists(lists, &block)
     completed_lists, incomplete_lists = lists.partition { |list| list_complete?(list) }
 
-    incomplete_lists.each { |list| yield list, lists.index(list) }
-    completed_lists.each { |list| yield list, lists.index(list) }
+    incomplete_lists.each(&block)
+    completed_lists.each(&block)
   end
 
   def sorted_todos(todos, &block)
